@@ -1,5 +1,5 @@
 // Paste your Apps Script Web App /exec URL here:
-const GAS_WEBAPP_URL = "PASTE_YOUR_GAS_WEBAPP_EXEC_URL_HERE";
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwHit5eCifvBli8xuQyuQ25xUYF61p5HeuMFbQwAuH3A4ZKFvgiGRfYE4IQ5G3oVF81/exec";
 
 function el(id){ return document.getElementById(id); }
 
