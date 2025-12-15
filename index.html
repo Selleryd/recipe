@@ -13,10 +13,9 @@
         <div class="logo">RR</div>
         <div>
           <h1>Recipe Rehab</h1>
-          <p>Paste a recipe URL. We detect “bad items” from your database and rewrite it healthier without breaking taste or function.</p>
+          <p>Paste a recipe URL. We flag problems, show MonkVee swaps, and rewrite it healthier without breaking function.</p>
         </div>
       </div>
-
       <div class="top-actions">
         <button id="toggleAdmin" class="btn ghost">Admin</button>
       </div>
@@ -32,15 +31,15 @@
           <label class="label">Strictness</label>
           <select id="strictness" class="input">
             <option value="balanced" selected>Balanced (default)</option>
-            <option value="strict">Strict (more aggressive swaps)</option>
-            <option value="minimal">Minimal (smallest changes)</option>
+            <option value="strict">Strict</option>
+            <option value="minimal">Minimal</option>
           </select>
         </div>
       </div>
 
       <div class="toggles">
         <label><input type="checkbox" id="avoidSeedOils" checked /> Avoid seed oils</label>
-        <label><input type="checkbox" id="lowerSugar" checked /> Reduce added sugar</label>
+        <label><input type="checkbox" id="lowerSugar" checked /> Replace added sugar (MonkVee)</label>
         <label><input type="checkbox" id="avoidDyes" checked /> Avoid artificial colors/dyes</label>
         <label><input type="checkbox" id="avoidUltraProcessed" /> Reduce ultra-processed additives</label>
       </div>
@@ -51,35 +50,68 @@
       </div>
 
       <p class="hint">
-        Some recipe sites block automated access. If a URL fails, try another recipe site or paste the recipe into your own page later.
+        Some recipe sites block automated access. If a URL fails, try another site. (We can add “paste recipe text” mode next.)
       </p>
     </section>
 
     <section class="grid">
       <div class="card">
-        <h2>Detected issues (from your database)</h2>
-        <div id="dbIssues" class="mono muted">—</div>
+        <h2>Detected issues</h2>
+        <div id="issuesList" class="stack muted">—</div>
       </div>
 
       <div class="card">
-        <h2>Suggested swaps (your rules)</h2>
-        <div id="swapSuggestions" class="mono muted">—</div>
+        <h2>Suggested swaps</h2>
+        <div id="swapsList" class="stack muted">—</div>
       </div>
     </section>
 
-    <section class="card">
-      <h2>Rewritten recipe</h2>
-      <div id="rewritten" class="mono muted">—</div>
+    <section class="grid recipeGrid">
+      <div class="card">
+        <div class="recipeHead">
+          <h2 class="recipeTitle" id="origTitle">Original recipe</h2>
+          <div class="meta" id="origMeta"></div>
+        </div>
+
+        <div class="recipeCols">
+          <div>
+            <h3 class="subhead">Ingredients</h3>
+            <ul id="origIngredients" class="ingList"></ul>
+          </div>
+          <div>
+            <h3 class="subhead">Instructions</h3>
+            <ol id="origInstructions" class="stepList"></ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="recipeHead">
+          <h2 class="recipeTitle" id="newTitle">Rewritten recipe</h2>
+          <div class="meta" id="newMeta"></div>
+        </div>
+
+        <div class="recipeCols">
+          <div>
+            <h3 class="subhead">Ingredients</h3>
+            <ul id="newIngredients" class="ingList"></ul>
+          </div>
+          <div>
+            <h3 class="subhead">Instructions</h3>
+            <ol id="newInstructions" class="stepList"></ol>
+          </div>
+        </div>
+
+        <div class="notesBlock">
+          <h3 class="subhead">Notes</h3>
+          <ul id="newNotes" class="noteList"></ul>
+        </div>
+      </div>
     </section>
 
     <section class="card">
       <h2>Change log</h2>
-      <div id="changeLog" class="mono muted">—</div>
-    </section>
-
-    <section class="card">
-      <h2>Raw JSON</h2>
-      <pre id="raw" class="mono">—</pre>
+      <ol id="changeLog" class="stepList"></ol>
     </section>
 
     <!-- Admin Drawer -->
@@ -96,14 +128,13 @@
         <div class="card" style="margin-top:12px;">
           <label class="label">Admin token</label>
           <input id="adminToken" class="input" placeholder="(set this in Apps Script properties)" />
-          <div class="hint">This token is checked server-side. Keep it private.</div>
+          <div class="hint">Do not hardcode this in GitHub.</div>
         </div>
 
         <div class="grid" style="margin-top:12px;">
           <div class="card">
             <h3 style="margin:0 0 10px 0;">Add unhealthy item</h3>
-
-            <label class="label">Name / trigger text (match rule)</label>
+            <label class="label">Name / trigger text</label>
             <input id="badName" class="input" placeholder="e.g., canola oil, Red 40, high fructose corn syrup" />
 
             <label class="label">Category</label>
@@ -116,7 +147,7 @@
               <option value="other">other</option>
             </select>
 
-            <label class="label">Notes (why it’s flagged)</label>
+            <label class="label">Notes</label>
             <input id="badNotes" class="input" placeholder="Short reason shown to users" />
 
             <label class="label">Match type</label>
@@ -132,12 +163,11 @@
 
           <div class="card">
             <h3 style="margin:0 0 10px 0;">Add swap rule</h3>
-
-            <label class="label">Triggers (comma-separated; match ingredient text)</label>
+            <label class="label">Triggers (comma-separated)</label>
             <input id="swapTriggers" class="input" placeholder="e.g., canola oil, vegetable oil" />
 
             <label class="label">Swap to</label>
-            <input id="swapTo" class="input" placeholder="e.g., extra virgin olive oil, avocado oil, butter" />
+            <input id="swapTo" class="input" placeholder="e.g., avocado oil" />
 
             <label class="label">Constraint (optional)</label>
             <select id="swapConstraint" class="input">
@@ -148,14 +178,14 @@
               <option value="no_high_heat">no_high_heat</option>
             </select>
 
-            <label class="label">Ratio / method note (optional)</label>
+            <label class="label">Ratio / method note</label>
             <input id="swapRatio" class="input" placeholder="e.g., 1:1, or 'reduce liquid by 1 tbsp'" />
 
-            <label class="label">Avoid if (optional)</label>
-            <input id="swapAvoidIf" class="input" placeholder="e.g., nut allergy, dairy-free, keto" />
+            <label class="label">Avoid if</label>
+            <input id="swapAvoidIf" class="input" placeholder="e.g., nut allergy, dairy-free" />
 
-            <label class="label">Taste note (optional)</label>
-            <input id="swapTasteNote" class="input" placeholder="e.g., 'keeps it buttery without sugar spike'" />
+            <label class="label">Taste note</label>
+            <input id="swapTasteNote" class="input" placeholder="e.g., 'keeps it buttery'" />
 
             <button id="addSwap" class="btn" style="margin-top:12px;">Add swap</button>
             <div id="swapStatus" class="mono muted" style="margin-top:10px;">—</div>
@@ -165,8 +195,8 @@
         <div class="card" style="margin-top:12px;">
           <h3 style="margin:0 0 10px 0;">Quick admin tools</h3>
           <div class="row">
-            <button id="adminListBad" class="btn ghost">List bad foods (top 50)</button>
-            <button id="adminListSwaps" class="btn ghost">List swaps (top 50)</button>
+            <button id="adminListBad" class="btn ghost">List bad foods</button>
+            <button id="adminListSwaps" class="btn ghost">List swaps</button>
           </div>
           <pre id="adminOut" class="mono" style="margin-top:10px;">—</pre>
         </div>
