@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recipe Rehab</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="brand">
+        <div class="logo">RR</div>
+        <div>
+          <h1>Recipe Rehab</h1>
+          <p>Paste a recipe URL. We detect “bad items” from your database and rewrite it healthier without breaking taste or function.</p>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button id="toggleAdmin" class="btn ghost">Admin</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="row">
+        <div class="col">
+          <label class="label">Recipe URL</label>
+          <input id="url" class="input" placeholder="https://example.com/recipe" />
+        </div>
+        <div class="col small">
+          <label class="label">Strictness</label>
+          <select id="strictness" class="input">
+            <option value="balanced" selected>Balanced (default)</option>
+            <option value="strict">Strict (more aggressive swaps)</option>
+            <option value="minimal">Minimal (smallest changes)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toggles">
+        <label><input type="checkbox" id="avoidSeedOils" checked /> Avoid seed oils</label>
+        <label><input type="checkbox" id="lowerSugar" checked /> Reduce added sugar</label>
+        <label><input type="checkbox" id="avoidDyes" checked /> Avoid artificial colors/dyes</label>
+        <label><input type="checkbox" id="avoidUltraProcessed" /> Reduce ultra-processed additives</label>
+      </div>
+
+      <div class="row">
+        <button id="go" class="btn">Analyze + Rewrite</button>
+        <button id="scanOnly" class="btn ghost">Scan only</button>
+      </div>
+
+      <p class="hint">
+        Some recipe sites block automated access. If a URL fails, try another recipe site or paste the recipe into your own page later.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Detected issues (from your database)</h2>
+        <div id="dbIssues" class="mono muted">—</div>
+      </div>
+
+      <div class="card">
+        <h2>Suggested swaps (your rules)</h2>
+        <div id="swapSuggestions" class="mono muted">—</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Rewritten recipe</h2>
+      <div id="rewritten" class="mono muted">—</div>
+    </section>
+
+    <section class="card">
+      <h2>Change log</h2>
+      <div id="changeLog" class="mono muted">—</div>
+    </section>
+
+    <section class="card">
+      <h2>Raw JSON</h2>
+      <pre id="raw" class="mono">—</pre>
+    </section>
+
+    <!-- Admin Drawer -->
+    <div id="adminDrawer" class="drawer hidden">
+      <div class="drawer-inner">
+        <div class="drawer-head">
+          <div>
+            <h2 style="margin:0;">Admin</h2>
+            <div class="muted smallText">Add “bad foods” + swap rules to your database.</div>
+          </div>
+          <button id="closeAdmin" class="btn ghost">Close</button>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <label class="label">Admin token</label>
+          <input id="adminToken" class="input" placeholder="(set this in Apps Script properties)" />
+          <div class="hint">This token is checked server-side. Keep it private.</div>
+        </div>
+
+        <div class="grid" style="margin-top:12px;">
+          <div class="card">
+            <h3 style="margin:0 0 10px 0;">Add unhealthy item</h3>
+
+            <label class="label">Name / trigger text (match rule)</label>
+            <input id="badName" class="input" placeholder="e.g., canola oil, Red 40, high fructose corn syrup" />
+
+            <label class="label">Category</label>
+            <select id="badCategory" class="input">
+              <option value="added_sugar">added_sugar</option>
+              <option value="seed_oil">seed_oil</option>
+              <option value="dye">dye</option>
+              <option value="additive">additive</option>
+              <option value="refined_carb">refined_carb</option>
+              <option value="other">other</option>
+            </select>
+
+            <label class="label">Notes (why it’s flagged)</label>
+            <input id="badNotes" class="input" placeholder="Short reason shown to users" />
+
+            <label class="label">Match type</label>
+            <select id="badMatchType" class="input">
+              <option value="contains" selected>contains</option>
+              <option value="exact">exact</option>
+              <option value="regex">regex</option>
+            </select>
+
+            <button id="addBad" class="btn" style="margin-top:12px;">Add item</button>
+            <div id="badStatus" class="mono muted" style="margin-top:10px;">—</div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin:0 0 10px 0;">Add swap rule</h3>
+
+            <label class="label">Triggers (comma-separated; match ingredient text)</label>
+            <input id="swapTriggers" class="input" placeholder="e.g., canola oil, vegetable oil" />
+
+            <label class="label">Swap to</label>
+            <input id="swapTo" class="input" placeholder="e.g., extra virgin olive oil, avocado oil, butter" />
+
+            <label class="label">Constraint (optional)</label>
+            <select id="swapConstraint" class="input">
+              <option value="" selected>(none)</option>
+              <option value="baking_only">baking_only</option>
+              <option value="frying_only">frying_only</option>
+              <option value="emulsion_only">emulsion_only</option>
+              <option value="no_high_heat">no_high_heat</option>
+            </select>
+
+            <label class="label">Ratio / method note (optional)</label>
+            <input id="swapRatio" class="input" placeholder="e.g., 1:1, or 'reduce liquid by 1 tbsp'" />
+
+            <label class="label">Avoid if (optional)</label>
+            <input id="swapAvoidIf" class="input" placeholder="e.g., nut allergy, dairy-free, keto" />
+
+            <label class="label">Taste note (optional)</label>
+            <input id="swapTasteNote" class="input" placeholder="e.g., 'keeps it buttery without sugar spike'" />
+
+            <button id="addSwap" class="btn" style="margin-top:12px;">Add swap</button>
+            <div id="swapStatus" class="mono muted" style="margin-top:10px;">—</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3 style="margin:0 0 10px 0;">Quick admin tools</h3>
+          <div class="row">
+            <button id="adminListBad" class="btn ghost">List bad foods (top 50)</button>
+            <button id="adminListSwaps" class="btn ghost">List swaps (top 50)</button>
+          </div>
+          <pre id="adminOut" class="mono" style="margin-top:10px;">—</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
