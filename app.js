@@ -11,7 +11,7 @@
  ***********************/
 
 // ✅ KEEP THIS AS YOUR STABLE /exec URL
-const GAS_WEBAPP_URL = "PASTE_YOUR_SCRIPT_GOOGLE_COM_EXEC_URL_HERE";
+const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwHit5eCifvBli8xuQyuQ25xUYF61p5HeuMFbQwAuH3A4ZKFvgiGRfYE4IQ5G3oVF81/exec";
 
 /* -----------------------
    Small style injection
